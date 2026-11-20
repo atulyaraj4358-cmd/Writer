@@ -1,0 +1,26 @@
+<!doctype html><html lang="en" data-theme="cream"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Inkwell</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#17120d">
+<link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg"><link rel="stylesheet" href="styles.css"></head><body>
+<main id="desk"><div class="sheet"><div id="page" aria-hidden="true"></div>
+<textarea id="ta" maxlength="3000" spellcheck="false" autofocus aria-label="Write here"></textarea><div class="cnt" id="cnt"></div></div></main>
+<div id="dim"></div><div id="lamp"><div id="rail"></div><i id="pod"><u id="cone"></u>•••</i></div>
+<div id="cap"><div id="panel" hidden>
+<label>Theme<select id="theme"><option value="cream">Cream paper</option><option value="slate">Dark slate</option><option value="garden">Garden</option><option value="blueprint">Blueprint</option><option value="vintage">Vintage</option></select></label>
+<label>Ribbon ink<select id="ink"><option value="">Theme default</option><option value="#111">Black</option><option value="#1d3f9c">Blue</option><option value="#a31d1d">Red</option><option value="#5a3a1c">Sepia</option></select></label>
+<label>Font size<input id="font" type="range" min="14" max="30"></label>
+<label class="r">Sound<input id="sound" type="checkbox"></label>
+<label>Sound type<select id="profile"><option value="classic">Classic</option><option value="soft">Soft</option><option value="clicky">Clicky</option></select></label>
+<label>Volume<input id="vol" type="range" min="0" max="1" step=".05"></label>
+<label class="r">Vibration<input id="haptic" type="checkbox"></label>
+<label class="r">Lamp<input id="lampOn" type="checkbox"></label>
+<label>Warmth<input id="warm" type="range" min="2200" max="6500" step="100"></label>
+<label>Light<input id="int" type="range" min=".2" max="1" step=".05"></label>
+<label>Reach<input id="size" type="range" min="60" max="200" step="5"></label>
+<label>Spread<input id="spread" type="range" min="40" max="160" step="5"></label>
+<div class="btns"><button id="spark">Spark a line</button><button id="notesB">Notes</button><button id="copy">Copy</button><button id="txt">.txt</button><button id="png">Image</button><button id="story">Story</button>
+<button data-p="A4">Print A4</button><button data-p="Letter">Print Letter</button><button data-p="A5">Print A5</button><button id="bak">Backup</button><button id="imp">Import</button></div></div>
+<button id="capb" aria-label="Menu" aria-expanded="false">Inkwell</button></div>
+<aside id="notes" hidden><div class="nh"><input id="q" placeholder="Search notes" aria-label="Search notes"><button id="nn">New</button><button id="nx" aria-label="Close">×</button></div><ul id="nl"></ul></aside>
+<div id="toast" hidden></div><input id="file" type="file" accept=".txt,.json" hidden>
+<script src="sound.js"></script><script src="app.js"></script></body></html>
