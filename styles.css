@@ -6,7 +6,7 @@
 [data-theme=blueprint]{--paper:#1f4f8a;--ink:#e8f1ff;--desk:#07182e}
 [data-theme=vintage]{--paper:#e9d58a;--ink:#3b2a12;--desk:#1c1408}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--desk);overscroll-behavior:none}
-#desk{height:var(--vh);overflow:auto;padding:6.5rem 0 40vh;display:flex;justify-content:center;align-items:flex-start;scroll-behavior:smooth}
+#desk{height:var(--vh);overflow-x:hidden;overflow-y:auto;padding:6.5rem 0 40vh;display:flex;justify-content:center;align-items:flex-start;scroll-behavior:smooth}
 .sheet{position:relative;display:grid;width:min(94vw,46rem);min-height:80vh;padding:calc(clamp(1.4rem,7vw,4rem) + 36px) clamp(1.4rem,7vw,4rem) clamp(1.4rem,7vw,4rem);border-radius:50% 50% 2px 2px / 90px 90px 2px 2px;background:var(--paper);color:var(--ink);
 font:var(--fs)/1.7 "Courier Prime","Special Elite","Courier New",monospace;box-shadow:0 2px 3px #0006,0 30px 70px #000a}
 .sheet::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
@@ -74,3 +74,6 @@ mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradien
 .sp small{opacity:0;font-size:11px;letter-spacing:.3em;color:#b9ac90;animation:fi .6s 1.5s forwards}@keyframes fi{to{opacity:.85}}
 @media(prefers-reduced-motion:reduce){#splash{animation-duration:.01s;animation-delay:.4s}.sp *{animation:none!important}.sp-t span{border-right:0}.sp small{opacity:.85}}
 @media print{#splash{display:none}}
+.sheet{transform:perspective(1400px) rotateX(var(--tilt,0deg));transform-origin:50% var(--tory,0px);transition:transform .35s ease-out,transform-origin .35s ease-out}
+@media(prefers-reduced-motion:reduce){.sheet{transform:none;transition:none}}
+@media print{.sheet{transform:none!important}}
