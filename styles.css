@@ -49,14 +49,13 @@ select,input[type=range],input:not([type]),.btns button,#notes button{font:inher
 #toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:20;background:#f3e6c8;color:#241b12;padding:.6rem 1rem;border-radius:8px;font:14px system-ui}
 #toast button{margin-left:.6rem}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-@media print{html,body{background:#fff}#desk{height:auto;overflow:visible;padding:0;display:block}#lamp,#dim,#top,#panel,#notes,#toast,.cnt,#ta,.sheet::before,.sheet::after{display:none!important}
-.sheet{border-radius:0;width:auto;min-height:0;box-shadow:none;background:#fff!important;color:#000!important;padding:0;font-size:12pt}#page b{transform:none!important;opacity:1!important}i.c{display:none}}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{background:#fff}#desk{height:auto;overflow:visible;padding:0;display:block}
+#lamp,#dim,#top,#panel,#notes,#toast,.cnt,#ta,#splash{display:none!important}.sheet{width:100%;min-height:0;box-shadow:none;margin:0 auto;transform:none!important}i.c{display:none}}
 .sheet::after{content:"";position:absolute;inset:0 0 auto;height:160px;border-radius:inherit;pointer-events:none;background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.12) 55%,transparent)}
 [data-paper=bill] .sheet{width:min(88vw,22rem);min-height:70vh;background:#f7f5ee;color:var(--inkb,#23201b);font-size:calc(var(--fs)*.85);line-height:1.6;border-radius:3px 3px 0 0;padding:2rem 1.4rem 2.4rem;box-shadow:none;
 -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 8px repeat-x;
 mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 8px repeat-x}
 [data-paper=bill] .sheet::after{display:none}[data-paper=bill] i.c::after{background:var(--inkb,#23201b)}
-@media print{[data-paper=bill] .sheet{-webkit-mask:none;mask:none}}
 @keyframes tk{40%{transform:translateY(6px)}}
 #tee.tap{animation:tk .14s ease-out}
 @media(prefers-reduced-motion:reduce){#tee.tap{animation:none}}
@@ -73,7 +72,5 @@ mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradien
 .sp-rail i::before{content:"•••"}@keyframes pd{from{left:0}to{left:calc(100% - 46px)}}
 .sp small{opacity:0;font-size:11px;letter-spacing:.3em;color:#b9ac90;animation:fi .6s 1.5s forwards}@keyframes fi{to{opacity:.85}}
 @media(prefers-reduced-motion:reduce){#splash{animation-duration:.01s;animation-delay:.4s}.sp *{animation:none!important}.sp-t span{border-right:0}.sp small{opacity:.85}}
-@media print{#splash{display:none}}
 .sheet{transform:perspective(1400px) rotateX(var(--tilt,0deg));transform-origin:50% var(--tory,0px);transition:transform .35s ease-out,transform-origin .35s ease-out}
 @media(prefers-reduced-motion:reduce){.sheet{transform:none;transition:none}}
-@media print{.sheet{transform:none!important}}
