@@ -56,3 +56,6 @@ select,input[type=range],input:not([type]),.btns button,#notes button{font:inher
 mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 8px repeat-x}
 [data-paper=bill] .sheet::after{display:none}[data-paper=bill] i.c::after{background:var(--inkb,#23201b)}
 @media print{[data-paper=bill] .sheet{-webkit-mask:none;mask:none}}
+@keyframes tk{40%{transform:translateY(4px)}}
+#pod.tap::before,#pod.tap::after{animation:tk .14s ease-out}
+@media(prefers-reduced-motion:reduce){#pod.tap::before,#pod.tap::after{animation:none}}

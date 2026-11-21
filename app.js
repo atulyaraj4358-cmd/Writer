@@ -30,7 +30,8 @@ if(Math.abs(r.top-lastTop)>4){belled=false;lastTop=r.top}
 if(!belled&&r.left>pr.right-10*S.s.font*.6){belled=true;Snd.play('bell')}}
 const buzz=n=>S.s.haptic&&navigator.vibrate&&navigator.vibrate(n);
 let tt;const typing=()=>{document.body.classList.add('typing');clearTimeout(tt);tt=setTimeout(()=>document.body.classList.remove('typing'),2500)};
-ta.addEventListener('beforeinput',e=>{Snd.init();const t=e.inputType;
+function tap(){const p=$('#pod');p.classList.remove('tap');void p.offsetWidth;p.classList.add('tap')}
+ta.addEventListener('beforeinput',e=>{Snd.init();tap();const t=e.inputType;
 if(t.startsWith('insert')&&t!=='insertLineBreak'&&t!=='insertParagraph'&&ta.value.length>=MAX&&ta.selectionStart===ta.selectionEnd){Snd.play('full');return}
 if(t==='insertLineBreak'||t==='insertParagraph'){Snd.play('ret');buzz(15);belled=false}
 else if(t.startsWith('delete')){Snd.play('back');buzz(8)}
