@@ -29,9 +29,9 @@ if(!w){o+='<span class="w">';w=1}
 o+=`<b style="transform:translateY(${((hs(i)-.5)*1.6).toFixed(2)}px) rotate(${((hs(i+7)-.5)*1.8).toFixed(2)}deg);opacity:${(.82+hs(i+3)*.18).toFixed(2)}">${esc(c)}</b>`}
 if(w)o+='</span>';
 pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ');c.classList.toggle('full',n>=MAX);pos()}
-function pos(){const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),ed=pg.offsetTop+pg.offsetHeight-S.s.font*1.7,k=Math.min(1,Math.max(0,(ed-170)/420));sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tory',ed+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.45+33,px=Math.min(Math.max(r.left,sr.left+44),sr.right-44);
+function pos(){const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),ed=pg.offsetTop+pg.offsetHeight-S.s.font*1.7,k=Math.min(1,Math.max(0,(ed-170)/420));sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tory',ed+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.85+33,px=Math.min(Math.max(r.left,sr.left+16),sr.right-16);
 L.setProperty('--ry',y+'px');L.setProperty('--px',px+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
-const d=$('#dim').style;d.setProperty('--lx',px+'px');d.setProperty('--ly',y+'px');const ck=$('#cone').style;ck.left=Math.min(Math.max(c.offsetLeft+(c.offsetParent===pg?pg.offsetLeft:0),44),sh.offsetWidth-44)+'px';ck.top=(dep+S.s.font*.45+22.5)+'px'}
+const d=$('#dim').style;d.setProperty('--lx',px+'px');d.setProperty('--ly',y+'px');const g=$('#glow').style;g.setProperty('--lx',px+'px');g.setProperty('--ly',y+'px');const ck=$('#cone').style;ck.left=Math.min(Math.max(c.offsetLeft+(c.offsetParent===pg?pg.offsetLeft:0),44),sh.offsetWidth-44)+'px';ck.top=(dep+S.s.font*.45+22.5)+'px'}
 let belled=false,lastTop=0;
 function bell(){const c=pg.querySelector('.c');if(!c)return;const r=c.getBoundingClientRect(),pr=pg.getBoundingClientRect();
 if(Math.abs(r.top-lastTop)>4){belled=false;lastTop=r.top}
@@ -80,7 +80,10 @@ const nz=document.createElement('canvas');nz.width=nz.height=160;const nc=nz.get
 x.globalCompositeOperation='multiply';x.fillStyle=x.createPattern(nz,'repeat');x.fillRect(0,0,w,h);x.globalCompositeOperation='source-over';
 if(!bill){const g=x.createLinearGradient(0,0,0,h*.14);g.addColorStop(0,'rgba(0,0,0,.35)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,w,h*.14)}
 x.fillStyle=ink;x.font=fs+'px "Courier New",monospace';x.textAlign='center';
-const cols=Math.floor((w-2*m)/(fs*.6));let y=m*1.3+fs;
+const cols=Math.floor((w-2*m)/(fs*.6));const y0=m*1.9+fs;
+if(!bill){x.save();x.globalAlpha=.72;x.fillStyle=ink;x.textAlign='center';x.font='700 '+fs*.95+'px Georgia,serif';x.fillText('ATULYA INKWELL',w/2,m*.8);x.globalAlpha=.4;x.fillRect(w/2-fs*4.2,m*.8+fs*.35,fs*8.4,Math.max(1,fs/22));x.restore()}
+if(S.s.paper==='ruled'){x.save();x.lineWidth=Math.max(1,fs/18);x.strokeStyle='rgba(70,100,170,.38)';for(let yy=y0+fs*.28;yy<h;yy+=fs*1.55){x.beginPath();x.moveTo(0,yy);x.lineTo(w,yy);x.stroke()}x.strokeStyle='rgba(210,70,70,.4)';x.beginPath();x.moveTo(m*.7,0);x.lineTo(m*.7,h);x.stroke();x.restore()}
+let y=y0;
 const draw=(l,s)=>{for(let k=0;k<l.length;k++){const ch=l[k];if(ch===' '||y>=h-m)continue;const j=s+k;x.save();x.globalAlpha=.82+hs(j+3)*.18;x.translate(m+k*fs*.6+fs*.3,y+(hs(j)-.5)*1.6*(fs/20));x.rotate((hs(j+7)-.5)*1.8*Math.PI/180);x.fillText(ch,0,0);x.restore()}y+=fs*1.55};
 let p=0;for(const para of ta.value.split('\n')){let line='',ls=p;for(const wd of para.split(' ')){if((line+wd).length>cols&&line){draw(line,ls);ls+=line.length;line=''}line+=wd+' '}draw(line,ls);p+=para.length+1}
 cv.toBlob(b=>{if(share&&navigator.canShare){const f=new File([b],name,{type:'image/png'});if(navigator.canShare({files:[f]}))return navigator.share({files:[f]}).catch(()=>{})}dl(name,b)})}
