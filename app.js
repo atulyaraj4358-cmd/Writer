@@ -23,7 +23,7 @@ function render(){const v=ta.value,p=ta.selectionStart,key=v+'|'+p;if(key===last
 for(let i=0;i<=v.length;i++){if(i===p)o+='<i class="c"></i>';if(i>=v.length)break;const c=v[i];
 o+=c==='\n'?'\n':`<b style="transform:translateY(${((hs(i)-.5)*1.6).toFixed(2)}px) rotate(${((hs(i+7)-.5)*1.8).toFixed(2)}deg);opacity:${(.82+hs(i+3)*.18).toFixed(2)}">${esc(c)}</b>`}
 pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ');c.classList.toggle('full',n>=MAX);pos()}
-function pos(){const c=pg.querySelector('.c');if(!c)return;const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.6;
+function pos(){const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),k=Math.min(1,Math.max(0,(dep-170)/420));sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tory',dep+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.6;
 L.setProperty('--ry',y+'px');L.setProperty('--px',Math.min(Math.max(r.left,sr.left+30),sr.right-30)+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
 const d=$('#dim').style;d.setProperty('--lx',r.left+'px');d.setProperty('--ly',y+'px')}
 let belled=false,lastTop=0;
@@ -98,3 +98,4 @@ let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
 addEventListener('appinstalled',()=>{$('#install').hidden=true;toast('Installed')});
 if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)$('#install').hidden=true;
 $('#install').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null}else toast('Browser menu me "Install app" ya "Add to Home screen" chun')};
+document.querySelector('.sheet').addEventListener('transitionend',e=>{if(e.target===e.currentTarget)pos()});
