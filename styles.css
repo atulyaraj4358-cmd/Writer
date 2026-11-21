@@ -60,3 +60,17 @@ mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradien
 @keyframes tk{40%{transform:translateY(6px)}}
 #tee.tap{animation:tk .14s ease-out}
 @media(prefers-reduced-motion:reduce){#tee.tap{animation:none}}
+#splash{position:fixed;inset:0;z-index:100;background:#0f0b07;display:grid;place-items:center;animation:spOut .5s 2.3s ease forwards}
+@keyframes spOut{to{opacity:0;visibility:hidden}}
+.sp{position:relative;display:grid;justify-items:center;gap:16px;color:#f3e6c8;font-family:"Courier New",monospace;font-size:clamp(20px,6vw,30px)}
+.sp-glow{position:absolute;width:340px;height:340px;left:50%;top:50%;margin:-220px 0 0 -170px;background:radial-gradient(circle,rgba(255,176,90,.3),transparent 65%);animation:glow 2.6s ease-in-out both}
+@keyframes glow{from{opacity:0;transform:scale(.6)}50%{opacity:1}to{opacity:.85;transform:scale(1)}}
+.sp-t{position:relative;font-weight:700;letter-spacing:0}
+.sp-t span{display:block;width:16ch;overflow:hidden;white-space:nowrap;border-right:2px solid #ffb35a;animation:ty 1.2s .35s steps(16) both,cb .6s steps(1) infinite}
+@keyframes ty{from{width:0}to{width:16ch}}@keyframes cb{50%{border-right-color:transparent}}
+.sp-rail{position:relative;width:16ch;height:8px;border-radius:4px;background:linear-gradient(#3b3733,#0d0c0b);box-shadow:0 3px 8px #000a}
+.sp-rail i{position:absolute;left:0;top:-9px;width:46px;height:26px;border-radius:13px;background:linear-gradient(#e6e1d8,#b9b3a8);box-shadow:0 4px 10px #000b;color:#ff9a35;font:normal 15px/24px sans-serif;text-align:center;letter-spacing:1px;animation:pd 1.2s .35s steps(16) both}
+.sp-rail i::before{content:"•••"}@keyframes pd{from{left:0}to{left:calc(100% - 46px)}}
+.sp small{opacity:0;font-size:11px;letter-spacing:.3em;color:#b9ac90;animation:fi .6s 1.5s forwards}@keyframes fi{to{opacity:.85}}
+@media(prefers-reduced-motion:reduce){#splash{animation-duration:.01s;animation-delay:.4s}.sp *{animation:none!important}.sp-t span{border-right:0}.sp small{opacity:.85}}
+@media print{#splash{display:none}}

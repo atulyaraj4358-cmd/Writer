@@ -94,3 +94,7 @@ if(!cur()){S.notes.length?S.cur=S.notes[0].id:newNote()}ta.value=cur().t;apply()
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
 if(lost)idb('get').then(j=>{try{if(j&&Array.isArray(JSON.parse(j).notes)){localStorage.setItem(KEY,j);location.reload()}}catch(e){}});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
+addEventListener('appinstalled',()=>{$('#install').hidden=true;toast('Installed')});
+if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)$('#install').hidden=true;
+$('#install').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null}else toast('Browser menu me "Install app" ya "Add to Home screen" chun')};
