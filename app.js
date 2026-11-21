@@ -68,10 +68,15 @@ const txt=[l('='),' '.repeat((w-t.length)>>1)+t,l('='),'DATE: '+d,l('-'),'ITEM'.
 S.s.paper='bill';$('#paper').value='bill';apply();ta.value=((v&&!v.endsWith('\n')?v+'\n':v)+txt).slice(0,MAX);ta.dispatchEvent(new Event('input'));$('#panel').hidden=true;ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)};
 $('#copy').onclick=()=>navigator.clipboard.writeText(ta.value).then(()=>toast('Copied'),()=>toast('Copy failed'));
 $('#txt').onclick=()=>dl('inkwell.txt',new Blob([ta.value],{type:'text/plain'}));
-function png(w,h,name,share){const cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d'),cs=getComputedStyle(root),fs=w/30,m=w*.1;
-const bill=S.s.paper==='bill';x.fillStyle=bill?'#f7f5ee':cs.getPropertyValue('--paper').trim();x.fillRect(0,0,w,h);x.fillStyle=bill?(S.s.ink||'#23201b'):cs.getPropertyValue('--ink').trim();x.font=fs+'px "Courier New",monospace';
-const cols=Math.floor((w-2*m)/(fs*.6));let y=m+fs;const draw=l=>{if(y<h-m)x.fillText(l.trimEnd(),m,y);y+=fs*1.55};
-for(const para of ta.value.split('\n')){let line='';for(const wd of para.split(' ')){if((line+wd).length>cols&&line){draw(line);line=''}line+=wd+' '}draw(line)}
+function png(w,h,name,share){const cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d'),cs=getComputedStyle(root),fs=w/30,m=w*.1,bill=S.s.paper==='bill',ink=bill?(S.s.ink||'#23201b'):cs.getPropertyValue('--ink').trim();
+x.fillStyle=bill?'#f7f5ee':cs.getPropertyValue('--paper').trim();x.fillRect(0,0,w,h);
+const nz=document.createElement('canvas');nz.width=nz.height=160;const nc=nz.getContext('2d'),id=nc.createImageData(160,160);for(let i=0;i<id.data.length;i+=4){id.data[i]=90;id.data[i+1]=80;id.data[i+2]=65;id.data[i+3]=Math.random()*45}nc.putImageData(id,0,0);
+x.globalCompositeOperation='multiply';x.fillStyle=x.createPattern(nz,'repeat');x.fillRect(0,0,w,h);x.globalCompositeOperation='source-over';
+if(!bill){const g=x.createLinearGradient(0,0,0,h*.14);g.addColorStop(0,'rgba(0,0,0,.35)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,w,h*.14)}
+x.fillStyle=ink;x.font=fs+'px "Courier New",monospace';x.textAlign='center';
+const cols=Math.floor((w-2*m)/(fs*.6));let y=m*1.3+fs;
+const draw=(l,s)=>{for(let k=0;k<l.length;k++){const ch=l[k];if(ch===' '||y>=h-m)continue;const j=s+k;x.save();x.globalAlpha=.82+hs(j+3)*.18;x.translate(m+k*fs*.6+fs*.3,y+(hs(j)-.5)*1.6*(fs/20));x.rotate((hs(j+7)-.5)*1.8*Math.PI/180);x.fillText(ch,0,0);x.restore()}y+=fs*1.55};
+let p=0;for(const para of ta.value.split('\n')){let line='',ls=p;for(const wd of para.split(' ')){if((line+wd).length>cols&&line){draw(line,ls);ls+=line.length;line=''}line+=wd+' '}draw(line,ls);p+=para.length+1}
 cv.toBlob(b=>{if(share&&navigator.canShare){const f=new File([b],name,{type:'image/png'});if(navigator.canShare({files:[f]}))return navigator.share({files:[f]}).catch(()=>{})}dl(name,b)})}
 $('#png').onclick=()=>png(1080,1080,'inkwell.png');$('#story').onclick=()=>png(1080,1920,'inkwell-story.png');
 document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{let s=$('#pgs');if(!s){s=document.createElement('style');s.id='pgs';document.head.append(s)}
