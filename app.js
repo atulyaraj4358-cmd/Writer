@@ -10,9 +10,9 @@ const ta=$('#ta'),pg=$('#page'),root=document.documentElement;
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const hs=i=>{const x=Math.sin(i*12.9898+1.3)*43758.5453;return x-Math.floor(x)};
 const cur=()=>S.notes.find(n=>n.id===S.cur);
-function apply(){const s=S.s;root.dataset.theme=s.theme;root.dataset.paper=s.paper;root.classList.toggle('lampoff',!s.lampOn);root.style.setProperty('--inkb',s.ink||'#23201b');s.ink?root.style.setProperty('--ink',s.ink):root.style.removeProperty('--ink');
+function apply(){const s=S.s;root.dataset.theme=s.theme;root.dataset.paper=s.paper;root.style.setProperty('--inkb',s.ink||'#23201b');s.ink?root.style.setProperty('--ink',s.ink):root.style.removeProperty('--ink');
 const t=(s.warm-2200)/4300;root.style.setProperty('--lamp',[255-45*t,170+55*t,90+165*t].map(Math.round).join(','));
-root.style.setProperty('--int',s.int);const rp=160*s.size/100,rw=Math.min(rp*Math.tan(s.spread*Math.PI/360),700);[['--mh',rp/2],['--mw',rw*.8],['--ch',rp*1.15],['--cw',rw*2]].forEach(([k,v])=>root.style.setProperty(k,v+'px'));root.style.setProperty('--fs',s.font+'px');
+root.style.setProperty('--int',s.int);const rp=160*s.size/100,rw=Math.min(rp*Math.tan(s.spread*Math.PI/360),700);[['--mh',rp/2],['--mw',rw*.8]].forEach(([k,v])=>root.style.setProperty(k,v+'px'));root.style.setProperty('--fs',s.font+'px');
 $('#dim').style.display=s.lampOn?'block':'none';const dn=s.lampOn?(s.int<.45?1:s.int<.75?2:3):0;document.querySelectorAll('#pod b').forEach((b,i)=>b.classList.toggle('on',i<dn));Snd.cfg(s);pos()}
 function bind(id,k,num){const e=$('#'+id),ck=e.type==='checkbox';ck?e.checked=S.s[k]:e.value=S.s[k];
 const f=()=>{S.s[k]=ck?e.checked:num?+e.value:e.value;apply();store()};e.addEventListener('input',f);e.addEventListener('change',f)}
@@ -23,9 +23,9 @@ function render(){const v=ta.value,p=ta.selectionStart,key=v+'|'+p;if(key===last
 for(let i=0;i<=v.length;i++){if(i===p)o+='<i class="c"></i>';if(i>=v.length)break;const c=v[i];
 o+=c==='\n'?'\n':`<b style="transform:translateY(${((hs(i)-.5)*1.6).toFixed(2)}px) rotate(${((hs(i+7)-.5)*1.8).toFixed(2)}deg);opacity:${(.82+hs(i+3)*.18).toFixed(2)}">${esc(c)}</b>`}
 pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ');c.classList.toggle('full',n>=MAX);pos()}
-function pos(){const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),k=Math.min(1,Math.max(0,(dep-170)/420));sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tory',dep+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.45+33,px=Math.min(Math.max(r.left,sr.left+44),sr.right-44);
-L.setProperty('--ry',y+'px');L.setProperty('--px',px+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
-const d=$('#dim').style;d.setProperty('--lx',px+'px');d.setProperty('--ly',y+'px');const ck=$('#cone').style;ck.left=Math.min(Math.max(c.offsetLeft+(c.offsetParent===pg?pg.offsetLeft:0),44),sh.offsetWidth-44)+'px';ck.top=(dep+S.s.font*.45+22.5)+'px'}
+function pos(){const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),k=Math.min(1,Math.max(0,(dep-170)/420));sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tory',dep+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.6;
+L.setProperty('--ry',y+'px');L.setProperty('--px',Math.min(Math.max(r.left,sr.left+30),sr.right-30)+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
+const d=$('#dim').style;d.setProperty('--lx',r.left+'px');d.setProperty('--ly',y+'px')}
 let belled=false,lastTop=0;
 function bell(){const c=pg.querySelector('.c');if(!c)return;const r=c.getBoundingClientRect(),pr=pg.getBoundingClientRect();
 if(Math.abs(r.top-lastTop)>4){belled=false;lastTop=r.top}
