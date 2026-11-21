@@ -1,8 +1,10 @@
-const $=s=>document.querySelector(s),KEY='inkwell.v1',MAX=3000;
+const $=s=>document.querySelector(s),KEY='inkwell.v1',MAX=10000;
+const idb=(m,v)=>new Promise(r=>{try{const q=indexedDB.open('inkwell',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onerror=()=>r();q.onsuccess=()=>{try{const s=q.result.transaction('k',m==='get'?'readonly':'readwrite').objectStore('k'),x=m==='get'?s.get('S'):s.put(v,'S');x.onsuccess=()=>r(x.result);x.onerror=()=>r()}catch(e){r()}}}catch(e){r()}});
 const D={paper:'letter',theme:'cream',ink:'',sound:true,profile:'classic',vol:.7,haptic:true,lampOn:true,warm:2700,int:.6,size:110,spread:135,font:20};
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!Array.isArray(S.notes))S={s:{},notes:[],cur:null};S.s={...D,...S.s};if(S.s.size>200||S.s.size<60)S.s.size=110;
-let tm;const flush=()=>{const v=$('#sv');try{localStorage.setItem(KEY,JSON.stringify(S));if(v)v.textContent='Saved ✓'}catch(e){if(v)v.textContent='Not saved'}},store=()=>{const v=$('#sv');if(v)v.textContent='Saving…';clearTimeout(tm);tm=setTimeout(flush,300)};
+const lost=!S||!Array.isArray(S.notes);
+if(lost)S={s:{},notes:[],cur:null};S.s={...D,...S.s};if(S.s.size>200||S.s.size<60)S.s.size=110;
+let tm;const flush=()=>{const v=$('#sv');try{const j=JSON.stringify(S);idb('put',j);localStorage.setItem(KEY,j);if(v)v.textContent='Saved ✓'}catch(e){if(v)v.textContent='Not saved'}},store=()=>{const v=$('#sv');if(v)v.textContent='Saving…';clearTimeout(tm);tm=setTimeout(flush,300)};
 addEventListener('pagehide',flush);document.addEventListener('visibilitychange',flush);
 const ta=$('#ta'),pg=$('#page'),root=document.documentElement;
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -20,7 +22,7 @@ let last='';
 function render(){const v=ta.value,p=ta.selectionStart,key=v+'|'+p;if(key===last)return;last=key;let o='';
 for(let i=0;i<=v.length;i++){if(i===p)o+='<i class="c"></i>';if(i>=v.length)break;const c=v[i];
 o+=c==='\n'?'\n':`<b style="transform:translateY(${((hs(i)-.5)*1.6).toFixed(2)}px) rotate(${((hs(i+7)-.5)*1.8).toFixed(2)}deg);opacity:${(.82+hs(i+3)*.18).toFixed(2)}">${esc(c)}</b>`}
-pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US');c.classList.toggle('full',n>=MAX);pos()}
+pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ');c.classList.toggle('full',n>=MAX);pos()}
 function pos(){const c=pg.querySelector('.c');if(!c)return;const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top+S.s.font*.6;
 L.setProperty('--ry',y+'px');L.setProperty('--px',Math.min(Math.max(r.left,sr.left+30),sr.right-30)+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
 const d=$('#dim').style;d.setProperty('--lx',r.left+'px');d.setProperty('--ly',y+'px')}
@@ -90,3 +92,5 @@ toast('Note deleted',()=>{S.notes.splice(i,0,n);openNote(n.id)})};li.append(b,d)
 $('#notesB').onclick=()=>{$('#panel').hidden=true;$('#notes').hidden=false;listNotes()};$('#nx').onclick=closeAll;$('#nn').onclick=newNote;$('#q').oninput=listNotes;
 if(!cur()){S.notes.length?S.cur=S.notes[0].id:newNote()}ta.value=cur().t;apply();render();listNotes();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
+if(lost)idb('get').then(j=>{try{if(j&&Array.isArray(JSON.parse(j).notes)){localStorage.setItem(KEY,j);location.reload()}}catch(e){}});
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
