@@ -29,7 +29,7 @@ if(!w){o+='<span class="w">';w=1}
 o+=`<b style="transform:translateY(${((hs(i)-.5)*1.6).toFixed(2)}px) rotate(${((hs(i+7)-.5)*1.8).toFixed(2)}deg);opacity:${(.82+hs(i+3)*.18).toFixed(2)}">${esc(c)}</b>`}
 if(w)o+='</span>';
 pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ');c.classList.toggle('full',n>=MAX);pos()}
-function pos(){const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),th=pg.offsetHeight-S.s.font*1.7,ed=pg.offsetTop+th,k=Math.min(1,Math.max(0,(th-140)/420));sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tn',k.toFixed(3));sh.style.setProperty('--tory',ed+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top-S.s.font*.3+30,px=Math.min(Math.max(r.left+S.s.font*.3,sr.left+16),sr.right-16);
+function pos(){root.style.setProperty('--ro',Math.min(1,$('#desk').scrollTop/120).toFixed(2));const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),th=pg.offsetHeight-S.s.font*1.7,ed=pg.offsetTop+th,k=0;sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tn',k.toFixed(3));sh.style.setProperty('--tory',ed+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top-S.s.font*.3+30,px=Math.min(Math.max(r.left+S.s.font*.3,sr.left+16),sr.right-16);
 L.setProperty('--ry',y+'px');L.setProperty('--px',px+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
 const d=$('#dim').style;d.setProperty('--lx',px+'px');d.setProperty('--ly',y+'px');const g=$('#glow').style;g.setProperty('--lx',px+'px');g.setProperty('--ly',y+'px');const ck=$('#cone').style;ck.left=Math.min(Math.max(c.offsetLeft+(c.offsetParent===pg?pg.offsetLeft:0),44),sh.offsetWidth-44)+'px';ck.top=(dep+S.s.font*.45+22.5)+'px'}
 let belled=false,lastTop=0;
@@ -45,7 +45,7 @@ if(t==='insertLineBreak'||t==='insertParagraph'){Snd.play('ret');buzz(15);belled
 else if(t.startsWith('delete')){Snd.play('back');buzz(8)}
 else if(t.startsWith('insert')){Snd.play(e.data===' '?'space':'key');buzz(5)}});
 ta.addEventListener('input',()=>{const n=cur();n.t=ta.value;n.u=Date.now();store();render();bell();typing();
-pg.querySelector('.c')?.scrollIntoView({block:'nearest'});listNotes()});
+follow();listNotes()});
 ta.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();document.execCommand('insertText',false,'    ')}
 if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();dl('inkwell.txt',new Blob([ta.value],{type:'text/plain'}))}
 if(e.key==='Escape')closeAll()});
@@ -113,3 +113,4 @@ addEventListener('appinstalled',()=>{$('#install').hidden=true;toast('Installed'
 if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)$('#install').hidden=true;
 $('#install').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null}else toast('Browser menu me "Install app" ya "Add to Home screen" chun')};
 document.querySelector('.sheet').addEventListener('transitionend',e=>{if(e.target===e.currentTarget)pos()});
+function follow(){const c=pg.querySelector('.c');if(!c)return;const d=$('#desk'),dr=d.getBoundingClientRect(),r=c.getBoundingClientRect(),t=dr.top+Math.max(170,dr.height*.4);if(r.top>t)d.scrollBy({top:r.top-t,behavior:'smooth'})}
