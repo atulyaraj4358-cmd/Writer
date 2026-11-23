@@ -98,13 +98,13 @@ if(!ok)S.notes.push({id:Date.now(),t:t.slice(0,MAX),u:Date.now()});S.cur=S.notes
 function newNote(){const n={id:Date.now(),t:'',u:Date.now()};S.notes.push(n);openNote(n.id)}
 function openNote(id){S.cur=id;ta.value=cur().t;last='';lv=null;render();listNotes();store();$('#notes').hidden=true;ta.focus()}
 function listNotes(){const q=$('#q').value.toLowerCase(),ul=$('#nl');ul.innerHTML='';
-[...S.notes].sort((a,b)=>b.u-a.u).filter(n=>n.t.toLowerCase().includes(q)).forEach(n=>{const li=document.createElement('li');if(n.id===S.cur)li.className='on';
+[...S.notes].sort((a,b)=>b.u-a.u).filter(n=>n.lock?!q:n.t.toLowerCase().includes(q)).forEach(n=>{const li=document.createElement('li');if(n.id===S.cur)li.className='on';
 const b=document.createElement('button'),d=document.createElement('button');b.innerHTML='<span></span><small></small>';
-b.firstChild.textContent=(n.t.split('\n')[0]||'Untitled').slice(0,40);b.lastChild.textContent=new Date(n.u).toLocaleString();b.onclick=()=>openNote(n.id);
-d.textContent='×';d.setAttribute('aria-label','Delete note');d.onclick=()=>{const i=S.notes.indexOf(n);S.notes.splice(i,1);if(!S.notes.length)newNote();else if(S.cur===n.id)openNote(S.notes[0].id);store();listNotes();
-toast('Note deleted',()=>{S.notes.splice(i,0,n);openNote(n.id)})};li.append(b,d);ul.append(li)})}
+b.firstChild.textContent=n.lock?'🔒 Locked note':(n.t.split('\n')[0]||'Untitled').slice(0,40);b.lastChild.textContent=new Date(n.u).toLocaleString();
+b.onclick=async()=>{if(n.lock&&n.id!==S.cur&&!await verifyPin(n))return;openNote(n.id)};
+d.textContent='⋮';d.className='mb';d.setAttribute('aria-label','Note options');d.onclick=e=>{e.stopPropagation();menu(n,d)};li.append(b,d);ul.append(li)})}
 $('#notesB').onclick=()=>{$('#panel').hidden=true;$('#notes').hidden=false;listNotes()};$('#nx').onclick=closeAll;$('#nn').onclick=newNote;$('#q').oninput=listNotes;
-if(!cur()){S.notes.length?S.cur=S.notes[0].id:newNote()}ta.value=cur().t;apply();render();listNotes();
+if(!cur()){S.notes.length?S.cur=S.notes[0].id:newNote()}if(cur().lock){const o=S.notes.find(x=>!x.lock);if(o)S.cur=o.id;else newNote()}ta.value=cur().t;apply();render();listNotes();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
 if(lost)idb('get').then(j=>{try{if(j&&Array.isArray(JSON.parse(j).notes)){localStorage.setItem(KEY,j);location.reload()}}catch(e){}});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -114,3 +114,29 @@ if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)$('#in
 $('#install').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null}else toast('Browser menu me "Install app" ya "Add to Home screen" chun')};
 document.querySelector('.sheet').addEventListener('transitionend',e=>{if(e.target===e.currentTarget)pos()});
 function follow(){const c=pg.querySelector('.c');if(!c)return;const d=$('#desk'),dr=d.getBoundingClientRect(),r=c.getBoundingClientRect(),t=dr.top+Math.max(170,dr.height*.4);if(r.top>t)d.scrollBy({top:r.top-t,behavior:'smooth'})}
+
+const wait=ms=>new Promise(r=>setTimeout(r,ms)),pinEl=$('#pin'),pd=$('#pd'),pdots=[...pd.children],gl=$('#pin .gl');let buf='',res=null,fails=0,lockUntil=0;
+const hx=async(s,salt)=>{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}let h=5381;for(const c of salt+s)h=(h*33^c.charCodeAt(0))>>>0;return String(h)};
+function draw(){pdots.forEach((d,i)=>d.classList.toggle('on',i<buf.length))}
+function pinOpen(t,s){if(document.activeElement)document.activeElement.blur();$('#pt').textContent=t;$('#ps').textContent=s||'';buf='';draw();pd.className='dots';pinEl.classList.remove('ok');if(pinEl.hidden){pinEl.hidden=false;buzz(10)}}
+function press(k){Snd.init();Snd.play('key');buzz(6);if(!res)return;if(k==='b'){buf=buf.slice(0,-1);draw();return}if(buf.length>=4)return;buf+=k;draw();if(buf.length===4){const r=res,v=buf;res=null;setTimeout(()=>r(v),230)}}
+const getPin=()=>new Promise(r=>{res=r;buf='';draw()});
+function pinCancel(){if(res){const r=res;res=null;r(null)}pinEl.hidden=true}
+async function pinResult(k){pd.className='dots '+k;if(k==='bad'){buzz([30,40,30,40,60]);await wait(520);buf='';draw();pd.className='dots'}else{buzz(25);pinEl.classList.add('ok');await wait(720);pinEl.hidden=true}}
+async function verifyPin(n,t){if(Date.now()<lockUntil){toast('Too many tries. Wait '+Math.ceil((lockUntil-Date.now())/1000)+'s');return false}
+pinOpen(t||'Enter PIN','Locked note');for(;;){const v=await getPin();if(v===null)return false;if(await hx(v,n.lock.s)===n.lock.h){fails=0;await pinResult('ok');return true}
+fails++;if(fails>=5){lockUntil=Date.now()+30000;fails=0;await pinResult('bad');pinEl.hidden=true;toast('Too many tries. Try again in 30s');return false}
+$('#ps').textContent='Wrong PIN · '+(5-fails)+' tries left';await pinResult('bad')}}
+async function setPin(n,t){t=t||'Set a PIN';pinOpen(t,'Choose 4 digits');for(;;){const a=await getPin();if(a===null)return false;$('#pt').textContent='Confirm PIN';$('#ps').textContent='Enter it again';buf='';draw();const b=await getPin();if(b===null)return false;
+if(a===b){const s=Math.random().toString(36).slice(2)+Date.now().toString(36);n.lock={s,h:await hx(a,s)};await pinResult('ok');return true}
+$('#pt').textContent=t;$('#ps').textContent="PINs didn't match";await pinResult('bad')}}
+function delNote(n){const i=S.notes.indexOf(n);S.notes.splice(i,1);if(!S.notes.length)newNote();else if(S.cur===n.id){const o=S.notes.find(x=>!x.lock);o?openNote(o.id):newNote()}store();listNotes();toast('Note deleted',()=>{S.notes.splice(i,0,n);openNote(n.id)})}
+function menu(n,btn){const m=$('#nm');m.innerHTML='';const add=(t,f)=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>{m.hidden=true;f()};m.append(b)};
+if(n.lock){add('Change PIN',async()=>{if(await verifyPin(n,'Current PIN')&&await setPin(n,'New PIN')){store();toast('PIN changed')}});add('Remove lock',async()=>{if(await verifyPin(n)){n.lock=null;store();listNotes();toast('Lock removed')}})}
+else add('Lock with PIN',async()=>{if(await setPin(n)){store();if(S.cur===n.id){const o=S.notes.find(x=>!x.lock);o?openNote(o.id):newNote()}listNotes();toast('Note locked')}});
+add('Delete',async()=>{if(n.lock&&!await verifyPin(n))return;delNote(n)});
+const r=btn.getBoundingClientRect();m.hidden=false;m.style.top=Math.min(r.bottom+4,innerHeight-m.offsetHeight-8)+'px';m.style.right=Math.max(8,innerWidth-r.right)+'px'}
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#nm,.mb'))$('#nm').hidden=true});
+['1','2','3','4','5','6','7','8','9','','0','b'].forEach((k,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--i',i);
+if(!k){b.style.visibility='hidden';b.disabled=true}else{b.innerHTML=k==='b'?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M13 9l4 6M17 9l-4 6"/></svg>':k;b.setAttribute('aria-label',k==='b'?'Delete':k);
+b.addEventListener('pointerdown',e=>{e
