@@ -1,4 +1,6 @@
-const $=s=>document.querySelector(s),KEY='inkwell.v1',MAX=10000;
+addEventListener('error',e=>{let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#7a1010;color:#fff;font:12px monospace;padding:8px;border-radius:8px;white-space:pre-wrap';document.body.append(b)}b.textContent='Error: '+e.message+' ('+String(e.filename||'').split('/').pop()+':'+e.lineno+')'});
+const NOP=new Proxy(function(){},{get:(t,p)=>p===Symbol.iterator?function*(){}:p===Symbol.toPrimitive?()=>'':p==='children'||p==='childNodes'?[]:p==='classList'?{toggle(){},add(){},remove(){},contains(){return false}}:p==='style'?{setProperty(){}}:p==='value'||p==='textContent'?'':p==='hidden'?true:p==='then'?undefined:NOP,set:()=>true,apply:()=>NOP});
+const $=s=>document.querySelector(s)||NOP,KEY='inkwell.v1',MAX=10000;
 const idb=(m,v)=>new Promise(r=>{try{const q=indexedDB.open('inkwell',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onerror=()=>r();q.onsuccess=()=>{try{const s=q.result.transaction('k',m==='get'?'readonly':'readwrite').objectStore('k'),x=m==='get'?s.get('S'):s.put(v,'S');x.onsuccess=()=>r(x.result);x.onerror=()=>r()}catch(e){r()}}}catch(e){r()}});
 const D={paper:'letter',theme:'cream',ink:'',sound:true,profile:'classic',vol:.7,haptic:true,lampOn:true,warm:2700,int:.6,size:110,spread:135,font:20};
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -139,4 +141,8 @@ const r=btn.getBoundingClientRect();m.hidden=false;m.style.top=Math.min(r.bottom
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#nm,.mb'))$('#nm').hidden=true});
 ['1','2','3','4','5','6','7','8','9','','0','b'].forEach((k,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--i',i);
 if(!k){b.style.visibility='hidden';b.disabled=true}else{b.innerHTML=k==='b'?'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M13 9l4 6M17 9l-4 6"/></svg>':k;b.setAttribute('aria-label',k==='b'?'Delete':k);
-b.addEventListener('pointerdown',e=>{e
+b.addEventListener('pointerdown',e=>{e.preventDefault();const r=b.getBoundingClientRect();b.style.setProperty('--px',(e.clientX-r.left)/r.width*100+'%');b.style.setProperty('--py',(e.clientY-r.top)/r.height*100+'%');b.classList.add('dn');press(k)});
+['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,()=>b.classList.remove('dn')))}$('#pp').append(b)});
+$('#pc').onclick=pinCancel;
+gl.addEventListener('pointermove',e=>{const r=gl.getBoundingClientRect();gl.style.setProperty('--mx',(e.clientX-r.left)/r.width*100+'%');gl.style.setProperty('--my',(e.clientY-r.top)/r.height*100+'%')});
+document.addEventListener('keydown',e=>{if(pinEl.hidden)return;if(/^\d$/.test(e.key))press(e.key);else if(e.key==='Backspace')press('b');else if(e.key==='Escape')pinCancel();else return;e.preventDefault();e.stopPropagation()},true);
