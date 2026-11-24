@@ -27,7 +27,7 @@ function place(p){const o=pg.querySelector('.c');if(o)o.remove();const c=documen
 while(nd=it.nextNode()){if(nd.nodeType===1){if(nd.tagName==='B'){if(n===p){nd.before(c);return}n+=(+nd.dataset.l||1)}}else if(nd.parentNode.tagName!=='B'){const L=nd.length;if(p<n+L){if(p>n)nd.splitText(p-n);p>n?nd.after(c):nd.before(c);return}n+=L}}pg.append(c)}
 let last='';
 function render(){const v=ta.value,p=ta.selectionStart,key=v+'|'+p;if(key===last)return;last=key;if(v===lv){place(p);pos();return}lv=v;let o='',w=0,i=0;
-const cps=Array.from(v);
+const cps=(typeof Intl!=='undefined'&&Intl.Segmenter)?[...new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(v)].map(s=>s.segment):Array.from(v);
 for(let k=0;k<=cps.length;k++){if(i===p)o+='<i class="c"></i>';if(k>=cps.length)break;const c=cps[k],L=c.length;
 if(c===' '||c==='\n'){if(w){o+='</span>';w=0}o+=c;i+=L;continue}
 if(!w){o+='<span class="w">';w=1}
