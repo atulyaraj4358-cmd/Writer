@@ -1,25 +1,26 @@
 addEventListener('error',e=>{let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#7a1010;color:#fff;font:12px monospace;padding:8px;border-radius:8px;white-space:pre-wrap';document.body.append(b)}b.textContent='Error: '+e.message+' ('+String(e.filename||'').split('/').pop()+':'+e.lineno+')'});
 const NOP=new Proxy(function(){},{get:(t,p)=>p===Symbol.iterator?function*(){}:p===Symbol.toPrimitive?()=>'':p==='children'||p==='childNodes'?[]:p==='classList'?{toggle(){},add(){},remove(){},contains(){return false}}:p==='style'?{setProperty(){}}:p==='value'||p==='textContent'?'':p==='hidden'?true:p==='then'?undefined:NOP,set:()=>true,apply:()=>NOP});
 const $=s=>document.querySelector(s)||NOP,KEY='inkwell.v1',MAX=10000;
-const idb=(m,v)=>new Promise(r=>{try{const q=indexedDB.open('inkwell',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onerror=()=>r();q.onsuccess=()=>{try{const s=q.result.transaction('k',m==='get'?'readonly':'readwrite').objectStore('k'),x=m==='get'?s.get('S'):s.put(v,'S');x.onsuccess=()=>r(x.result);x.onerror=()=>r()}catch(e){r()}}}catch(e){r()}});
-const D={paper:'letter',theme:'cream',ink:'',sound:true,profile:'classic',vol:.7,haptic:true,lampOn:true,warm:2700,int:.6,size:110,spread:135,font:20};
+const idb=(m,v,key='S')=>new Promise(r=>{try{const q=indexedDB.open('inkwell',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onerror=()=>r();q.onsuccess=()=>{try{const s=q.result.transaction('k',m==='get'?'readonly':'readwrite').objectStore('k'),x=m==='get'?s.get(key):s.put(v,key);x.onsuccess=()=>r(x.result);x.onerror=()=>r()}catch(e){r()}}}catch(e){r()}});
+const D={paper:'letter',theme:'cream',ink:'',sound:true,profile:'classic',vol:.7,haptic:true,lampOn:true,warm:2700,int:.6,size:110,spread:135,font:20,fontfam:'',marg:1,lsp:1.7};
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 const lost=!S||!Array.isArray(S.notes);
 if(lost)S={s:{},notes:[],cur:null};S.s={...D,...S.s};if(S.s.size>200||S.s.size<60)S.s.size=110;
-let tm;const flush=()=>{const v=$('#sv');try{const j=JSON.stringify(S);idb('put',j);localStorage.setItem(KEY,j);if(v)v.textContent='Saved ✓'}catch(e){if(v)v.textContent='Not saved'}},store=()=>{const v=$('#sv');if(v)v.textContent='Saving…';clearTimeout(tm);tm=setTimeout(flush,300)};
+let tm;const flush=()=>{const v=$('#sv');try{const j=JSON.stringify(S);idb('put',j);localStorage.setItem(KEY,j);if(v)v.textContent='Saved ✓';backupMaybe(j)}catch(e){if(v)v.textContent='Not saved'}},store=()=>{const v=$('#sv');if(v)v.textContent='Saving…';clearTimeout(tm);tm=setTimeout(flush,300)};
 addEventListener('pagehide',flush);document.addEventListener('visibilitychange',flush);
 const ta=$('#ta'),pg=$('#page'),root=document.documentElement;
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const hs=i=>{const x=Math.sin(i*12.9898+1.3)*43758.5453;return x-Math.floor(x)};
 const cur=()=>S.notes.find(n=>n.id===S.cur);
-function apply(){const s=S.s;root.dataset.theme=s.theme;root.dataset.paper=s.paper;root.classList.toggle('lampoff',!s.lampOn);root.style.setProperty('--inkb',s.ink||'#23201b');s.ink?root.style.setProperty('--ink',s.ink):root.style.removeProperty('--ink');
+let verTimer=null,undoS=[],redoS=[],utimer=null,lastBackupAt=0;
+function apply(){const s=S.s;root.dataset.theme=s.theme;root.dataset.paper=s.paper;root.classList.toggle('lampoff',!s.lampOn);root.style.setProperty('--inkb',s.ink||'#23201b');s.ink?root.style.setProperty('--ink',s.ink):root.style.removeProperty('--ink');root.dataset.fontfam=s.fontfam||'';root.style.setProperty('--mg',s.marg);root.style.setProperty('--lsp',s.lsp);
 const t=(s.warm-2200)/4300;root.style.setProperty('--lamp',[255-45*t,170+55*t,90+165*t].map(Math.round).join(','));
 root.style.setProperty('--int',s.int);const rp=160*s.size/100,rw=Math.min(rp*Math.tan(s.spread*Math.PI/360),700);[['--mh',rp/2],['--mw',rw*.8],['--ch',rp*1.15],['--cw',rw*2]].forEach(([k,v])=>root.style.setProperty(k,v+'px'));root.style.setProperty('--fs',s.font+'px');
 $('#dim').style.display=s.lampOn?'block':'none';const dn=s.lampOn?(s.int<.45?1:s.int<.75?2:3):0;document.querySelectorAll('#pod b').forEach((b,i)=>b.classList.toggle('on',i<dn));Snd.cfg(s);pos()}
 function bind(id,k,num){const e=$('#'+id),ck=e.type==='checkbox';ck?e.checked=S.s[k]:e.value=S.s[k];
 const f=()=>{S.s[k]=ck?e.checked:num?+e.value:e.value;apply();store()};e.addEventListener('input',f);e.addEventListener('change',f)}
-[['paper','paper'],['theme','theme'],['ink','ink'],['profile','profile'],['sound','sound'],['haptic','haptic'],['lampOn','lampOn']].forEach(a=>bind(...a));
-[['font','font'],['vol','vol'],['warm','warm'],['int','int'],['size','size'],['spread','spread']].forEach(a=>bind(a[0],a[1],1));
+[['paper','paper'],['theme','theme'],['ink','ink'],['profile','profile'],['sound','sound'],['haptic','haptic'],['lampOn','lampOn'],['fontfam','fontfam']].forEach(a=>bind(...a));
+[['font','font'],['vol','vol'],['warm','warm'],['int','int'],['size','size'],['spread','spread'],['marg','marg'],['lsp','lsp']].forEach(a=>bind(a[0],a[1],1));
 let lv=null;
 function place(p){const o=pg.querySelector('.c');if(o)o.remove();const c=document.createElement('i');c.className='c';let n=0,nd;const it=document.createNodeIterator(pg,5);
 while(nd=it.nextNode()){if(nd.nodeType===1){if(nd.tagName==='B'){if(n===p){nd.before(c);return}n++}}else if(nd.parentNode.tagName!=='B'){const L=nd.length;if(p<n+L){if(p>n)nd.splitText(p-n);p>n?nd.after(c):nd.before(c);return}n+=L}}pg.append(c)}
@@ -30,7 +31,7 @@ if(c===' '||c==='\n'){if(w){o+='</span>';w=0}o+=c;continue}
 if(!w){o+='<span class="w">';w=1}
 o+=`<b style="transform:translateY(${((hs(i)-.5)*1.6).toFixed(2)}px) rotate(${((hs(i+7)-.5)*1.8).toFixed(2)}deg);opacity:${(.82+hs(i+3)*.18).toFixed(2)}">${esc(c)}</b>`}
 if(w)o+='</span>';
-pg.innerHTML=o+'\n';const n=v.length,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ');c.classList.toggle('full',n>=MAX);pos()}
+pg.innerHTML=o+'\n';const n=v.length,wc=v.trim()?v.trim().split(/\s+/).length:0,c=$('#cnt');c.textContent=n+' / '+MAX.toLocaleString('en-US').replace(/,/g,' ')+' · '+wc+(wc===1?' word':' words');c.classList.toggle('full',n>=MAX);pos()}
 function pos(){root.style.setProperty('--ro',Math.min(1,$('#desk').scrollTop/120).toFixed(2));const c=pg.querySelector('.c');if(!c)return;const sh=document.querySelector('.sheet'),dep=c.offsetTop+(c.offsetParent===pg?pg.offsetTop:0),th=pg.offsetHeight-S.s.font*1.7,ed=pg.offsetTop+th,k=0;sh.style.setProperty('--tilt',(k*13).toFixed(2)+'deg');sh.style.setProperty('--tn',k.toFixed(3));sh.style.setProperty('--tory',ed+'px');const r=c.getBoundingClientRect(),sr=document.querySelector('.sheet').getBoundingClientRect(),L=$('#lamp').style,y=r.top-S.s.font*.3+30,px=Math.min(Math.max(r.left+S.s.font*.3,sr.left+16),sr.right-16);
 L.setProperty('--ry',y+'px');L.setProperty('--px',px+'px');L.setProperty('--rx',sr.left-8+'px');L.setProperty('--rw0',sr.width+16+'px');
 const d=$('#dim').style;d.setProperty('--lx',px+'px');d.setProperty('--ly',y+'px');const g=$('#glow').style;g.setProperty('--lx',px+'px');g.setProperty('--ly',y+'px');const ck=$('#cone').style;ck.left=Math.min(Math.max(c.offsetLeft+(c.offsetParent===pg?pg.offsetLeft:0),44),sh.offsetWidth-44)+'px';ck.top=(dep+S.s.font*.45+22.5)+'px'}
@@ -43,20 +44,23 @@ let tt;const typing=()=>{document.body.classList.add('typing');clearTimeout(tt);
 function tap(){const p=$('#tee');p.classList.remove('tap');void p.offsetWidth;p.classList.add('tap')}
 ta.addEventListener('beforeinput',e=>{Snd.init();tap();const t=e.inputType;
 if(t.startsWith('insert')&&t!=='insertLineBreak'&&t!=='insertParagraph'&&ta.value.length>=MAX&&ta.selectionStart===ta.selectionEnd){Snd.play('full');return}
-if(t==='insertLineBreak'||t==='insertParagraph'){Snd.play('ret');buzz(15);belled=false}
-else if(t.startsWith('delete')){Snd.play('back');buzz(8)}
-else if(t.startsWith('insert')){Snd.play(e.data===' '?'space':'key');buzz(5)}});
+if(t==='insertLineBreak'||t==='insertParagraph'){markEdit();Snd.play('ret');buzz(15);belled=false}
+else if(t.startsWith('delete')){markEdit();Snd.play('back');buzz(8)}
+else if(t.startsWith('insert')){markEdit();Snd.play(e.data===' '?'space':'key');buzz(5)}});
 ta.addEventListener('input',()=>{const n=cur();n.t=ta.value;n.u=Date.now();store();render();bell();typing();
+clearTimeout(verTimer);verTimer=setTimeout(()=>snapshotVersion(n),90000);
 follow();listNotes()});
 ta.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();document.execCommand('insertText',false,'    ')}
 if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();dl('inkwell.txt',new Blob([ta.value],{type:'text/plain'}))}
+else if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();if(undoS.length){redoS.push(ta.value);ta.value=undoS.pop();ta.dispatchEvent(new Event('input'))}}
+else if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();if(redoS.length){undoS.push(ta.value);ta.value=redoS.pop();ta.dispatchEvent(new Event('input'))}}
 if(e.key==='Escape')closeAll()});
 let rq=0;document.addEventListener('selectionchange',()=>{if(document.activeElement===ta&&!rq)rq=requestAnimationFrame(()=>{rq=0;render()})});
 ta.addEventListener('focus',()=>{document.body.classList.remove('nf');render()});ta.addEventListener('blur',()=>document.body.classList.add('nf'));
 $('#desk').addEventListener('scroll',pos);addEventListener('resize',pos);
 const vv=window.visualViewport,vh=()=>{root.style.setProperty('--vh',(vv?vv.height:innerHeight)+'px');pos()};vv&&vv.addEventListener('resize',vh);vh();
 ['pointermove','pointerdown'].forEach(ev=>addEventListener(ev,()=>document.body.classList.remove('typing')));
-function closeAll(){$('#panel').hidden=true;$('#notes').hidden=true;ta.focus()}
+function closeAll(){$('#panel').hidden=true;$('#notes').hidden=true;$('#sheetDlg').hidden=true;$('#nm').hidden=true;ta.focus()}
 $('#studioB').onclick=()=>{const p=$('#panel');p.hidden=!p.hidden;$('#notes').hidden=true};
 $('#boxB').onclick=()=>$('#notesB').click();$('#shareB').onclick=()=>png(1080,1080,'inkwell.png',true);
 const pod=$('#pod');let lp;
@@ -98,11 +102,11 @@ $('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=awa
 try{const j=JSON.parse(t);if(Array.isArray(j.notes)){j.notes.forEach((n,i)=>S.notes.push({id:Date.now()+i,t:String(n.t||'').slice(0,MAX),u:n.u||Date.now()}));ok=true}}catch(_){}
 if(!ok)S.notes.push({id:Date.now(),t:t.slice(0,MAX),u:Date.now()});S.cur=S.notes[S.notes.length-1].id;openNote(S.cur);toast('Imported');e.target.value=''};
 function newNote(){const n={id:Date.now(),t:'',u:Date.now()};S.notes.push(n);openNote(n.id)}
-function openNote(id){S.cur=id;ta.value=cur().t;last='';lv=null;render();listNotes();store();$('#notes').hidden=true;ta.focus()}
+function openNote(id){clearTimeout(verTimer);undoS=[];redoS=[];utimer=null;S.cur=id;ta.value=cur().t;last='';lv=null;render();listNotes();store();$('#notes').hidden=true;ta.focus()}
 function listNotes(){const q=$('#q').value.toLowerCase(),ul=$('#nl');ul.innerHTML='';
 [...S.notes].sort((a,b)=>b.u-a.u).filter(n=>n.lock?!q:n.t.toLowerCase().includes(q)).forEach(n=>{const li=document.createElement('li');if(n.id===S.cur)li.className='on';
 const b=document.createElement('button'),d=document.createElement('button');b.innerHTML='<span></span><small></small>';
-b.firstChild.textContent=n.lock?'🔒 Locked note':(n.t.split('\n')[0]||'Untitled').slice(0,40);b.lastChild.textContent=new Date(n.u).toLocaleString();
+b.firstChild.textContent=n.lock?'🔒 Locked note':(n.title||(n.t.split('\n')[0]||'Untitled').slice(0,40));b.lastChild.textContent=new Date(n.u).toLocaleString();
 b.onclick=async()=>{if(n.lock&&n.id!==S.cur&&!await verifyPin(n))return;openNote(n.id)};
 d.textContent='⋮';d.className='mb';d.setAttribute('aria-label','Note options');d.onclick=e=>{e.stopPropagation();menu(n,d)};li.append(b,d);ul.append(li)})}
 $('#notesB').onclick=()=>{$('#panel').hidden=true;$('#notes').hidden=false;listNotes()};$('#nx').onclick=closeAll;$('#nn').onclick=newNote;$('#q').oninput=listNotes;
@@ -121,10 +125,10 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms)),pinEl=$('#pin'),pd=$('#pd'),pdot
 const hx=async(s,salt)=>{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}let h=5381;for(const c of salt+s)h=(h*33^c.charCodeAt(0))>>>0;return String(h)};
 function draw(){pdots.forEach((d,i)=>d.classList.toggle('on',i<buf.length))}
 function pinOpen(t,s){if(document.activeElement)document.activeElement.blur();$('#pt').textContent=t;$('#ps').textContent=s||'';buf='';draw();pd.className='dots';pinEl.classList.remove('ok');if(pinEl.hidden){pinEl.hidden=false;buzz(10)}}
-function press(k){Snd.init();Snd.play('key');buzz(6);if(!res)return;if(k==='b'){buf=buf.slice(0,-1);draw();return}if(buf.length>=4)return;buf+=k;draw();if(buf.length===4){const r=res,v=buf;res=null;setTimeout(()=>r(v),230)}}
+function press(k){Snd.init();Snd.play(k==='b'?'back':'pintap');buzz(6);if(!res)return;if(k==='b'){buf=buf.slice(0,-1);draw();return}if(buf.length>=4)return;buf+=k;draw();if(buf.length===4){const r=res,v=buf;res=null;setTimeout(()=>r(v),230)}}
 const getPin=()=>new Promise(r=>{res=r;buf='';draw()});
 function pinCancel(){if(res){const r=res;res=null;r(null)}pinEl.hidden=true}
-async function pinResult(k){pd.className='dots '+k;if(k==='bad'){buzz([30,40,30,40,60]);await wait(520);buf='';draw();pd.className='dots'}else{buzz(25);pinEl.classList.add('ok');await wait(720);pinEl.hidden=true}}
+async function pinResult(k){pd.className='dots '+k;if(k==='bad'){Snd.play('pinbad');buzz([30,40,30,40,60]);await wait(520);buf='';draw();pd.className='dots'}else{Snd.play('pinok');buzz(25);pinEl.classList.add('ok');await wait(720);pinEl.hidden=true}}
 async function verifyPin(n,t){if(Date.now()<lockUntil){toast('Too many tries. Wait '+Math.ceil((lockUntil-Date.now())/1000)+'s');return false}
 pinOpen(t||'Enter PIN','Locked note');for(;;){const v=await getPin();if(v===null)return false;if(await hx(v,n.lock.s)===n.lock.h){fails=0;await pinResult('ok');return true}
 fails++;if(fails>=5){lockUntil=Date.now()+30000;fails=0;await pinResult('bad');pinEl.hidden=true;toast('Too many tries. Try again in 30s');return false}
@@ -134,6 +138,7 @@ if(a===b){const s=Math.random().toString(36).slice(2)+Date.now().toString(36);n.
 $('#pt').textContent=t;$('#ps').textContent="PINs didn't match";await pinResult('bad')}}
 function delNote(n){const i=S.notes.indexOf(n);S.notes.splice(i,1);if(!S.notes.length)newNote();else if(S.cur===n.id){const o=S.notes.find(x=>!x.lock);o?openNote(o.id):newNote()}store();listNotes();toast('Note deleted',()=>{S.notes.splice(i,0,n);openNote(n.id)})}
 function menu(n,btn){const m=$('#nm');m.innerHTML='';const add=(t,f)=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>{m.hidden=true;f()};m.append(b)};
+add('Rename',async()=>{if(n.lock&&!await verifyPin(n))return;renameNote(n)});
 if(n.lock){add('Change PIN',async()=>{if(await verifyPin(n,'Current PIN')&&await setPin(n,'New PIN')){store();toast('PIN changed')}});add('Remove lock',async()=>{if(await verifyPin(n)){n.lock=null;store();listNotes();toast('Lock removed')}})}
 else add('Lock with PIN',async()=>{if(await setPin(n)){store();if(S.cur===n.id){const o=S.notes.find(x=>!x.lock);o?openNote(o.id):newNote()}listNotes();toast('Note locked')}});
 add('Delete',async()=>{if(n.lock&&!await verifyPin(n))return;delNote(n)});
@@ -146,3 +151,35 @@ b.addEventListener('pointerdown',e=>{e.preventDefault();const r=b.getBoundingCli
 $('#pc').onclick=pinCancel;
 gl.addEventListener('pointermove',e=>{const r=gl.getBoundingClientRect();gl.style.setProperty('--mx',(e.clientX-r.left)/r.width*100+'%');gl.style.setProperty('--my',(e.clientY-r.top)/r.height*100+'%')});
 document.addEventListener('keydown',e=>{if(pinEl.hidden)return;if(/^\d$/.test(e.key))press(e.key);else if(e.key==='Backspace')press('b');else if(e.key==='Escape')pinCancel();else return;e.preventDefault();e.stopPropagation()},true);
+
+function markEdit(){if(!utimer)pushUndo(ta.value);clearTimeout(utimer);utimer=setTimeout(()=>utimer=null,500)}
+function pushUndo(v){undoS.push(v);if(undoS.length>100)undoS.shift();redoS=[]}
+function snapshotVersion(n){if(!n)return;if(!n.versions)n.versions=[];const last=n.versions[n.versions.length-1];if(last&&last.t_text===n.t)return;n.versions.push({t:Date.now(),t_text:n.t});if(n.versions.length>20)n.versions.shift();store()}
+function backupMaybe(j){const now=Date.now();if(now-lastBackupAt<5*60*1000)return;lastBackupAt=now;S.meta=S.meta||{};const idx=S.meta.bkIdx||0;idb('put',JSON.stringify({t:now,data:j}),'bk'+idx);S.meta.bkIdx=(idx+1)%5}
+async function listBackups(){const out=[];for(let i=0;i<5;i++){try{const r=await idb('get',undefined,'bk'+i);if(r){const o=JSON.parse(r);out.push({i,t:o.t,data:o.data})}}catch(e){}}return out.sort((x,y)=>y.t-x.t)}
+function openDlg(title,html){$('#dT').textContent=title;$('#dB').innerHTML=html;$('#sheetDlg').hidden=false}
+$('#dX').onclick=()=>$('#sheetDlg').hidden=true;
+function renameNote(n){openDlg('Rename note','<input id="rnIn" type="text" maxlength="60" placeholder="Note title" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border-radius:8px;border:1px solid #5b4b33;background:#2d2418;color:inherit;font:inherit"><div class="btns" style="margin-top:.8rem"><button id="rnOk">Save</button><button id="rnClr">Clear title</button></div>');
+const inp=document.getElementById('rnIn');if(inp){inp.value=n.title||'';setTimeout(()=>inp.focus(),60)}
+const ok=document.getElementById('rnOk');if(ok)ok.onclick=()=>{n.title=(inp.value||'').trim().slice(0,60);store();listNotes();$('#sheetDlg').hidden=true;toast('Renamed')};
+const clr=document.getElementById('rnClr');if(clr)clr.onclick=()=>{n.title='';store();listNotes();$('#sheetDlg').hidden=true}}
+const SHORTCUTS_HTML=`<ul>
+<li>Ctrl/Cmd + S — Save as .txt</li>
+<li>Ctrl/Cmd + Z — Undo</li>
+<li>Ctrl/Cmd + Shift + Z (or Ctrl+Y) — Redo</li>
+<li>Tab — Insert 4 spaces</li>
+<li>Esc — Close menu, Studio or dialog</li>
+</ul>`;
+async function showVersions(){const n=cur(),vs=(n.versions||[]).slice().reverse();
+let html='<b>This note</b>'+(vs.length?('<ul>'+vs.map((v,i)=>{const idx=n.versions.length-1-i;return `<li class="vrow"><span>${new Date(v.t).toLocaleString()} · ${v.t_text.length} chars</span><button data-vi="${idx}">Restore</button></li>`}).join('')+'</ul>'):'<p>No saved versions yet. One is kept automatically every couple of minutes while you write.</p>');
+const bks=await listBackups();
+html+='<b>Device backups</b>'+(bks.length?('<ul>'+bks.map(b=>`<li class="vrow"><span>${new Date(b.t).toLocaleString()}</span><span><button data-bd="${b.i}">Download</button> <button data-br="${b.i}">Restore all</button></span></li>`).join('')+'</ul>'):'<p>No device backups yet. One is kept automatically every few minutes.</p>');
+openDlg('Version history',html);
+$('#dB').querySelectorAll('[data-vi]').forEach(b=>b.onclick=()=>{const v=n.versions[+b.dataset.vi];if(!v)return;if(n.t!==v.t_text)n.versions.push({t:Date.now(),t_text:n.t});ta.value=v.t_text;ta.dispatchEvent(new Event('input'));$('#sheetDlg').hidden=true;toast('Version restored')});
+$('#dB').querySelectorAll('[data-bd]').forEach(b=>b.onclick=()=>{const bk=bks.find(x=>String(x.i)===b.dataset.bd);if(!bk)return;dl('inkwell-backup-'+new Date(bk.t).toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json',new Blob([bk.data],{type:'application/json'}))});
+$('#dB').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{const bk=bks.find(x=>String(x.i)===b.dataset.br);if(!bk)return;if(!confirm('Replace all current notes with this backup from '+new Date(bk.t).toLocaleString()+'? This cannot be undone.'))return;localStorage.setItem(KEY,bk.data);location.reload()})}
+$('#focusB').onclick=()=>{$('#panel').hidden=true;document.body.classList.toggle('focus');$('#exitTab').hidden=!document.body.classList.contains('focus')};
+$('#exitTab').onclick=()=>{document.body.classList.remove('focus');$('#exitTab').hidden=true};
+$('#readB').onclick=()=>{$('#panel').hidden=true;document.body.classList.toggle('reading')};
+$('#shortB').onclick=()=>{$('#panel').hidden=true;openDlg('Keyboard shortcuts',SHORTCUTS_HTML)};
+$('#verB').onclick=()=>{$('#panel').hidden=true;showVersions()};

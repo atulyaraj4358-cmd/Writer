@@ -16,4 +16,7 @@ else if(k==='space'){noise(c.f*.5,c.q,c.d*1.8,.8);tone(c.th*.6,.09,c.g*1.4)}
 else if(k==='back'){noise(c.f*.7,c.q,c.d*1.2,.7);tone(c.th*1.2,.04,c.g)}
 else if(k==='full'){tone(90,.12,.6)}
 else if(k==='ret'){noise(700,.5,.35,.6);tone(100,.12,.7);noise(2400,3,.03,.9,.34);tone(120,.08,.8,.36)}
-else if(k==='bell'){tone(2637,1.3,.35,0,.98);tone(5274,.9,.15,0,.98);tone(3951,1,.12,0,.98)}}}})();
+else if(k==='bell'){tone(2637,1.3,.35,0,.98);tone(5274,.9,.15,0,.98);tone(3951,1,.12,0,.98)}
+else if(k==='pintap'){tone(540+Math.random()*50,.09,.16,0,.88,'sine');tone(1080+Math.random()*60,.06,.06,.015,.85,'sine')}
+else if(k==='pinok'){[659,988,1318].forEach((f,i)=>tone(f,.22,.22,i*.1,.92,'sine'));tone(1976,.3,.12,.26,.9,'triangle')}
+else if(k==='pinbad'){tone(220,.24,.3,0,.6,'sine');tone(185,.26,.22,.05,.55,'sine')}}}})();
