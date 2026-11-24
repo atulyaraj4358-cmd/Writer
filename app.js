@@ -61,7 +61,7 @@ if(e.key==='Escape')closeAll()});
 let rq=0;document.addEventListener('selectionchange',()=>{if(document.activeElement===ta&&!rq)rq=requestAnimationFrame(()=>{rq=0;render()})});
 ta.addEventListener('focus',()=>{document.body.classList.remove('nf');render()});ta.addEventListener('blur',()=>document.body.classList.add('nf'));
 $('#desk').addEventListener('scroll',pos);addEventListener('resize',pos);
-const vv=window.visualViewport,vh=()=>{root.style.setProperty('--vh',(vv?vv.height:innerHeight)+'px');pos()};vv&&vv.addEventListener('resize',vh);vh();
+let vvt;const vv=window.visualViewport,vh=()=>{document.body.classList.add('vvresize');root.style.setProperty('--vh',(vv?vv.height:innerHeight)+'px');pos();clearTimeout(vvt);vvt=setTimeout(()=>{document.body.classList.remove('vvresize');pos()},220)};vv&&vv.addEventListener('resize',vh);vh();
 ['pointermove','pointerdown'].forEach(ev=>addEventListener(ev,()=>document.body.classList.remove('typing')));
 function closeAll(){$('#panel').hidden=true;$('#notes').hidden=true;$('#sheetDlg').hidden=true;$('#nm').hidden=true;ta.focus()}
 $('#studioB').onclick=()=>{const p=$('#panel');p.hidden=!p.hidden;$('#notes').hidden=true};
